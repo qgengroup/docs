@@ -7,15 +7,37 @@ info:
     It is written supporting the openAPI standards and all data returned is in JSON format. 
     
     Requests should be directed to the appropriate API URL 
-
     - Staging: https://qgenonlinestaging.com/integration-api/
     - Production: TBD
-
+    
     All API requests must be made over HTTPS as HTTP is not supported. 
-    See the Authentication section for information on correctly authenticating calls 
+    See the authentication section for information on correctly authenticating calls 
     to the QGen Direct API.
-
     For any queries please contact: support@qgengroup.com
+    
+    # Generate API Key
+    
+    Login to qgenonline.com with a user that has credentials to generate API keys. In the **Settings** menu 
+    you will find the **Generate API key** sub menu. Click on it and fill in the form.
+    For security reason, we recommend you specify the IP address of your client accessing ourt API. If left 
+    empty, IP whitelisting is disabled, meaning that all IPs can access the API.
+    
+    # How to use the API explorer
+    
+    This page allows you to test the APIs directly without any coding. It's great to test some examples and
+    make sure your keys are woring and the servers are connected. Start bt clicking gthe 
+    **Try it out** button in the Login section. This will allow you to edit the body paramters with your
+    clientID and secret Key as generated from QGen Online page.
+    
+    From the response, cut the access_token value (whatever is inside the qutations) and paste it in the 
+    **value** field shown when you press the **Authorize** button shown here.
+    
+    You can then press the **Try it now** buttons on the other endpoints, edit the values of the fields in
+    the *Body*  and press **Execute**
+  
+  
+    
+    
   termsOfService: 'http://qgengroup.com'
   contact:
     name: API Dev Team
@@ -24,6 +46,8 @@ info:
   license:
     name: QGen Agreement
     url: 'http://qgengroup.com'
+    
+
 
 servers:
   - url: https://qgenonlinestaging.com
@@ -39,14 +63,14 @@ components:
 
 
 tags:
-  - name: public
+  - name: authentication
   - name: aml
 
 paths:
   /integration-api/v1/public/login:
     post:
       tags:
-        - public
+        - authentication
       summary: login
       description: |
         You should have already generated an access key pair via QGen Online Dev tools section.
@@ -58,7 +82,6 @@ paths:
         a JWT session token to use during your other API calls. You can call this more than one 
         time during a session to make sure it does not expire. So check the expiry time 
         provided with the token in the response and make sure to generate a new token before the time is up. 
-
         Parameters required:
         - clientID
         - apikey
@@ -580,4 +603,3 @@ paths:
                   code: 401
                   message: unauthorized
                   type: ACCESS_DENIED
-                  
