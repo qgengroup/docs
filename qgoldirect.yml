@@ -1,0 +1,583 @@
+openapi: 3.0.0
+info:
+  title: QGen Direct
+  version: '1.0.0'
+  description: |
+    This API enables QGen clients to integrate their systems with QGen to access our services.
+    It is written supporting the openAPI standards and all data returned is in JSON format. 
+    
+    Requests should be directed to the appropriate API URL 
+
+    - Staging: https://qgenonlinestaging.com/integration-api/
+    - Production: TBD
+
+    All API requests must be made over HTTPS as HTTP is not supported. 
+    See the Authentication section for information on correctly authenticating calls 
+    to the QGen Direct API.
+
+    For any queries please contact: support@qgengroup.com
+  termsOfService: 'http://qgengroup.com'
+  contact:
+    name: API Dev Team
+    email: support@qgengroup.com
+    url: 'https://qgengroup.com/contact/'
+  license:
+    name: QGen Agreement
+    url: 'http://qgengroup.com'
+
+servers:
+  - url: https://qgenonlinestaging.com
+    description: Staging server
+  - url: https://tobedefined
+    description: Production server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+
+tags:
+  - name: public
+  - name: aml
+
+paths:
+  /integration-api/v1/public/login:
+    post:
+      tags:
+        - public
+      summary: login
+      description: |
+        You should have already generated an access key pair via QGen Online Dev tools section.
+        If not, Login to QGen Online using your admin user credentials, and access the Dev tools 
+        to generate an API key. You can generate multiple keys for both
+        the staging or production environments. Multiple keys are uniquely
+        identified by a unique key identifier called ClientID.
+        This 'Login' endpoint converts your clientID/secretkey pair, if validated, into
+        a JWT session token to use during your other API calls. You can call this more than one 
+        time during a session to make sure it does not expire. So check the expiry time 
+        provided with the token in the response and make sure to generate a new token before the time is up. 
+
+        Parameters required:
+        - clientID
+        - apikey
+      security: []
+      requestBody:
+        description: Send the clientID and resepctive secret API key as generated in QGenOnline
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                clientID:
+                  type: string
+                  description: ClientID that matches the secret key
+                clientSecret:
+                  type: string
+                  description: Secret key
+              
+              example:
+                clientID: 63ee439c60c4f758b44caff6
+                clientSecret: h0tYq:5r6dp3.8Z,)bs>7kO24unF${}P
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: True if token was generated successfully. False otherwise
+                  data:
+                    type: object
+                    description: In casse of an error , this object will be set to 'null'
+                    properties:
+                      access_token:
+                        type: string
+                        description: The temporary JWT token to use in all subsequent calls
+                      expires: 
+                        type: integer
+                        format: date-time
+                        description: expiry date and time of the token
+                  errors:
+                    type: object
+                    description: Array of error object types. If the request was successfull, this object will be set to 'null'
+                    properties: 
+                      code:
+                        type: integer
+                        description: The HTML error reason code. Includes 400 (bad request), 401 (Unauthorized)
+                      message:
+                        type: string
+                        description: A descriptive message describing the reason for the error
+                      type:
+                        type: string
+                        description: Error type such as "BAD_REQUEST_ERROR", "UNAUTHORIZED_ERROR"
+              example:
+                success: true
+                data:
+                  access_token: |
+                    eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOlsiQ29tcGx5IiwiQU1MIl0sImNsaWVudF9pZCI6IjYzZjM4NWI2OTQwY2JmYzYx
+                    ZjYxM2Q1NCIsImV4cCI6MTY3NjkxNDg2NywiaXNzIjoiUWdlbkFwaSIsIm1lcmNoYW50X2lkIjoiNWVkZTE3OTUxMTExZmMyNGQ4OWJiYTdiIiwibW
+                    VyY2hhbnRfbmFtZSI6Iktub3cgTWUgTm93Iiwib3JpZ19pYXQiOjE2NzY5MDc2NjcsInVzZXJuYW1lIjoiZ29kd2luLnNjaGVt
+                    YnJpQGtub3dtZW5vdy5jb20ifQ.ozzW9BCFPicR93t_zOJTwn3vaHc8-ibiQbYqZVlPi7AoUw9skC0QL6dgxkVqQGxQ2on8arR_NiaaIR8JxelcGS
+                  expires: 2023-02-20T17:41:07.725270578Z
+                errors: null
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: False in case of a bad request
+                  data:
+                    type: object
+                    description: In casse of an error , this object will be set to 'null'
+                  errors:
+                    type: object
+                    description: Array of error object types.
+                    properties: 
+                      code:
+                        type: integer
+                        description: Bad request error
+                      message:
+                        type: string
+                        description: A descriptive message describing the reason for the error
+                      type:
+                        type: string
+                        description: "BAD_REQUEST_ERROR"
+              example:
+                success: false
+                data: null
+                errors: 
+                  code: 400
+                  message: "invalid character '\\n' in string literal"
+                  type: BAD_REQUEST_ERROR
+
+        '401':
+          description: Unauthorized, check your token if still valid. It may have expired.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: False in case of a bad request
+                  data:
+                    type: object
+                    description: In casse of an error , this object will be set to 'null'
+                  errors:
+                    type: object
+                    description: Array of error object types.
+                    properties: 
+                      code:
+                        type: integer
+                        description: Bad request error
+                      message:
+                        type: string
+                        description: A descriptive message describing the reason for the error
+                      type:
+                        type: string
+                        description: "UNAUTHORIZED_ERROR"
+              example:
+                success: false
+                data: null
+                errors: 
+                  code: 401
+                  message: "invalid token secret"
+                  type: UNAUTHORIZED_ERROR
+
+  /integration-api/v1/aml/search:
+    post:
+      tags:
+        - aml
+      summary: Search
+      description: |
+        Creates a new search by sending search terms, parameters and filters. This endpoint can be used to 
+        instantly know if the entity has any potential hits. If there are no hits, the endpoint returns 'No Match' 
+        and a 0 value in the totalHits. This allows you to instantly onboard a customer. If this search
+        return 'potential match' plus a value which is higher than 1 in ther totalHits field, you can suspend the 
+        onboarding process until you review the hits on qgenonline.com using the returned ID to filter 
+        the results with.
+      security:
+        - bearerAuth: []        
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search_term:
+                  type: string
+                  description: The name of the entity. Can be a person or a company
+                filters:
+                  type: object
+                  properties:
+                    birth_year:
+                      type: integer
+                      description: The year of birth of the person if known. Leave empty if entity is a company
+                    country_codes: 
+                      description: | 
+                                      Results are filtered by the entity nationality or 
+                                      country of residence. Array of ISO 3166-1 alpha-2 strings 
+                      type: array
+                      items: 
+                        type: string
+                    types:
+                      description: |  
+                                      These types are used within the search to refine 
+                                      the result set. There is an extensive range of 
+                                      filters available - use of the filters is entirely 
+                                      optional. The example shows how the filters should 
+                                      be included in your request. You must send a value
+                                      from the allowed list as documented here.
+                      type: array
+                      items: 
+                        type: string
+                        enum: 
+                          - sanction
+                          - warning  
+                          - fitness-probity
+                          - pep
+                          - pep-class-1
+                          - pep-class-2
+                          - pep-class-3
+                          - pep-class-4
+                          - adverse-media
+                          - adverse-media-financial-crime
+                          - adverse-media-violent-crime
+                          - adverse-media-sexual-crime
+                          - adverse-media-terrorism
+                          - adverse-media-fraud
+                          - adverse-media-narcotics
+                          - adverse-media-general
+                client_ref:
+                  type: string
+                  description: Your refeerence for easy link to your records
+                  maxLength: 255
+                notes:
+                  type: string
+                  description: |
+                    Your own notes to add to this search for future reference. Max length is 1024 characters.
+                fuzziness:
+                  description: |
+                                  Determines how closely the returned results must match 
+                                  the supplied name. Overridden by exact_match parameter
+                                  setting in this request
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 1.0
+                tags:
+                  description: |
+                    An array of three custom tags labelled Tag1, Tag2 and Tag 3, Just insert whatever 
+                    value you want in that sequence to assign the first value to tag 1, the scond value 
+                    to tag 3 and \the third value in the list to tag 3, Any or all tags  can be left empty 
+                  type: array
+                  items:
+                    type: string
+
+              
+              
+              example:
+                search_term: Jesse Pinkman
+                filters:
+                  birth_year: '1980'
+                  country_codes:
+                    - US
+                    - CA
+                  types:
+                    - sanction
+                    - warning
+                    - fitness-probity
+                    - pep
+                    - pep-class-1
+                    - pep-class-2
+                    - pep-class-3
+                    - pep-class-4
+                    - adverse-media
+                    - adverse-media-financial-crime
+                    - adverse-media-violent-crime
+                    - adverse-media-sexual-crime
+                    - adverse-media-terrorism
+                    - adverse-media-fraud
+                    - adverse-media-narcotics
+                    - adverse-media-general
+                client_ref: '1234567890'
+                notes: This is an optional note for your records.
+                fuzziness: 0.6
+                tags:
+                  - String to assign to Tag 1
+                  - String to assign to Tag 2
+                  - String to assign to Tag 3
+      
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: True if token was generated successfully. False otherwise
+                  data:
+                    type: object
+                    description: In casse of an error , this object will be set to 'null'
+                    properties:
+                      ID:
+                        type: string
+                        description: The unique search ID generated automatically
+                      totalHits: 
+                        type: integer
+                        description: total number of hits
+                      matchStatus:
+                        type: string
+                        description: Set to "potential_match" if totalHits value is more than 0. set to "No_Match" if totalHits is 0
+                  errors:
+                    type: object
+                    description: Array of error object types. If the request was successfull, this object will be set to 'null'
+                    properties: 
+                      code:
+                        type: integer
+                        description: The HTML error reason code. Includes 400 (bad request), 401 (Unauthorized)
+                      message:
+                        type: string
+                        description: A descriptive message describing the reason for the error
+                      type:
+                        type: string
+                        description: Error type such as "BAD_REQUEST_ERROR", "UNAUTHORIZED_ERROR"
+              example:
+                success: true
+                data:
+                  ID: 63f39d127b2b07819d09866d
+                  totalHits: 9
+                  matchStatus: potential_match
+                errors: null
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Set to false if not successful
+                  data:
+                    type: object
+                    properties:
+                      ID:
+                        type: string
+                        description: The unique search ID generated automatically
+                      totalHits: 
+                        type: integer
+                        description: total number of hits
+                      matchStatus:
+                        type: string
+                        description: Set to "potential_match" if totalHits value is more than 0. set to "No_Match" if totalHits is 0
+                  errors:
+                    type: object
+                    properties: 
+                      code: 
+                        type: integer
+                        description: Http error code
+                      message:
+                        type: string
+                        description: error message
+                      type:
+                        type: string
+                        description: http status code
+
+              example:
+                success: false
+                data: null
+                errors:
+                  code: 400
+                  message: unknown field search term
+                  type: BAD_REQUEST_ERROR
+                  
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Set to false if not successful
+                  data:
+                    type: object
+                    properties:
+                      ID:
+                        type: string
+                        description: The unique search ID generated automatically
+                      totalHits: 
+                        type: integer
+                        description: total number of hits
+                      matchStatus:
+                        type: string
+                        description: Set to "potential_match" if totalHits value is more than 0. set to "No_Match" if totalHits is 0
+                  errors:
+                    type: object
+                    properties: 
+                      code: 
+                        type: integer
+                        description: Http error code
+                      message:
+                        type: string
+                        description: error message
+                      type:
+                        type: string
+                        description: http status code
+
+              example:
+                success: false
+                data: null
+                errors:
+                  code: 401
+                  message: unauthorized
+                  type: UNAUTHORiZED
+                  
+
+
+  /integration-api/v1/aml/search/monitor:
+    post:
+      tags:
+        - aml
+      summary: Monitor
+      description: |
+        Switch 'ON' or 'OFF' the onitoring on a specific search. By default all 
+        searches are automatically being monitored. This means that you should run this
+        endpoint to switch off a search from continuous monitoring.
+      security:
+        - bearerAuth: [] 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: 
+                  type: string
+                  description: The search ID returned in the ID field of the response to a Search call
+                is_monitored:
+                  type: boolean
+                  description: Set to 'true' if you want to monitor this search. Set to 'false' if you want to stop monitoring 
+              example:
+                id: 63f4a0698870e271fc119fc0
+                is_monitored: false 
+
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: true if successful, false if unsuccesful
+                  data:
+                    type: string
+                    description: content of the response 
+                  errors:
+                    type: object
+                    properties:
+                      code:
+                        type: integer
+                      message:
+                        type: string
+                      type:
+                        type: string
+            
+              example:
+                success: true
+                data: null
+                errors: null
+
+        '400':
+          description: Invalid ID - ID does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: true if successful, false if unsuccesful
+                  data:
+                    type: string
+                    description: content of the response 
+                  errors:
+                    type: object
+                    properties:
+                      code:
+                        type: integer
+                      message:
+                        type: string
+                      type:
+                        type: string
+            
+              example:
+                success: false
+                data: null
+                errors:
+                  code: 400
+                  message: id - Value must be a valid bson object ID
+                  type: BAD_REQUEST_ERROR
+      
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Set to false if not successful
+                  data:
+                    type: object
+                    properties:
+                      ID:
+                        type: string
+                        description: The unique search ID generated automatically
+                      totalHits: 
+                        type: integer
+                        description: total number of hits
+                      matchStatus:
+                        type: string
+                        description: Set to "potential_match" if totalHits value is more than 0. set to "No_Match" if totalHits is 0
+                  errors:
+                    type: object
+                    properties: 
+                      code: 
+                        type: integer
+                        description: Http error code
+                      message:
+                        type: string
+                        description: error message
+                      type:
+                        type: string
+                        description: http status code
+
+              example:
+                success: false
+                data: null
+                errors:
+                  code: 401
+                  message: unauthorized
+                  type: ACCESS_DENIED
+                  
