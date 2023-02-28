@@ -50,7 +50,7 @@ info:
 
 
 servers:
-  - url: https://qgenonlinestaging.com
+  - url: https://qgenonlinestaging.com/integration-api
     description: Staging server
   - url: https://tobedefined
     description: Production server
@@ -67,7 +67,7 @@ tags:
   - name: aml
 
 paths:
-  /integration-api/v1/public/login:
+  /v1/public/login:
     post:
       tags:
         - authentication
@@ -217,7 +217,7 @@ paths:
                   message: "invalid token secret"
                   type: UNAUTHORIZED_ERROR
 
-  /integration-api/v1/aml/search:
+  /v1/aml/search:
     post:
       tags:
         - aml
@@ -474,7 +474,7 @@ paths:
                   
 
 
-  /integration-api/v1/aml/search/monitor:
+  /v1/aml/search/monitor:
     post:
       tags:
         - aml
